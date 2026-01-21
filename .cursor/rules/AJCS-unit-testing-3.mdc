@@ -1,0 +1,38 @@
+name: Uso coherente del framework y prevención de anti-patrones en pruebas unitarias
+
+globs:
+  - Backend/test/**/*.spec.ts
+
+ALWAYS:
+  - Utiliza las APIs de assertions de Jest: `expect()`, matchers (`toEqual`, `toBe`, etc).
+  - Escribe descripciones claras e intencionales en cada `it`.
+  - Documenta los valores simulados (mocks/stubs) si representan un edge case.
+
+DO NOT:
+  - No uses el tipo `any` en pruebas.
+  - No realices llamadas a servicios externos ni dependencias reales.
+  - No repitas lógica de producción dentro del test (extraer helpers/factories si es necesario).
+  - No uses aserciones vacías o sin chequear (como `expect(true).toBe(true)`).
+
+<example>
+import { Test, TestingModule } from '@nestjs/testing';
+import { UserService } from '../../src/user/user.service';
+
+describe('UserService', () => {
+  let service: UserService;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [UserService],
+    }).compile();
+    service = module.get<UserService>(UserService);
+  });
+
+  it('should throw error when email already exists', async () => {
+    // Arrange
+    jest.spyOn(service, 'createUser').mockRejectedValue(new Error('exists'));
+    // Act & Assert
+    await expect(service.createUser({ email: 'dup@mail.com' })).rejects.toThrow('exists');
+  });
+});
+</example>

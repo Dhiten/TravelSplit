@@ -1,0 +1,57 @@
+name: AAA pattern y aislamiento de dependencias en pruebas unitarias
+
+globs:
+  - Backend/test/**/*.spec.ts
+
+ALWAYS:
+  - Aplica sistemáticamente el patrón AAA (Arrange, Act, Assert) con separación lógica visible (comentarios, bloques).
+  - Mockea TODAS las dependencias externas (BD, red, apis, fs, etc) usando Jest (`jest.fn()`, mock factories).
+  - Borra los mocks con `jest.clearAllMocks()` en afterEach o similar.
+  - Prueba siempre al menos un caso exitoso y uno de error para cada método bajo prueba.
+
+DO NOT:
+  - No llames ni inicialices infraestructura real (DB, HTTP, filesystems).
+  - No crees objetos/datas repetidos a mano (usar helpers o factories si aplica).
+  - No dejes dependencias sin mockear, ni uses implementaciones reales en servicios/utility externos.
+
+<example>
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { UserService } from '../../src/user/user.service';
+import { User } from '../../src/user/user.entity';
+
+describe('UserService', () => {
+  let service: UserService;
+  const userRepoMock = {
+    findOne: jest.fn(),
+    save: jest.fn(),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        UserService,
+        { provide: getRepositoryToken(User), useValue: userRepoMock },
+      ],
+    }).compile();
+    service = module.get<UserService>(UserService);
+    jest.clearAllMocks();
+  });
+
+  it('should create new user [happy path]', async () => {
+    // Arrange
+    userRepoMock.save.mockResolvedValue({ id: 1, name: 'test' });
+    // Act
+    const result = await service.createUser({ name: 'test' });
+    // Assert
+    expect(result).toEqual({ id: 1, name: 'test' });
+  });
+
+  it('should throw if save fails', async () => {
+    // Arrange
+    userRepoMock.save.mockRejectedValue(new Error('fail'));
+    // Act & Assert
+    await expect(service.createUser({ name: 'test' })).rejects.toThrow('fail');
+  });
+});
+</example>

@@ -1,0 +1,40 @@
+name: Estructura y organización básica de pruebas unitarias NestJS
+
+globs:
+  - Backend/test/**/*.spec.ts
+
+ALWAYS:
+  - Estructura cada archivo de prueba usando bloques `describe` para agrupar métodos/lógica del módulo o clase bajo prueba.
+  - Usa funciones `it` o `test` con descripciones claras y orientadas a comportamiento.
+  - Inicia cada archivo de test con los imports de dependencias, mockeos y el módulo bajo prueba.
+  - El nombre del archivo debe seguir `{nombre-objeto}.spec.ts`.
+
+DO NOT:
+  - No nombres archivos con sufijo `.test.ts` o cualquier otro fuera de `.spec.ts`.
+  - No incluyas pruebas de integración ni E2E en estos archivos.
+  - No declares pruebas anidadas sin sentido (anidar describe/it sin una razón de modularidad clara).
+
+<example>
+// Backend/test/user/user.service.spec.ts
+
+import { Test, TestingModule } from '@nestjs/testing';
+import { UserService } from '../../src/user/user.service';
+
+describe('UserService', () => {
+  let service: UserService;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [UserService],
+    }).compile();
+
+    service = module.get<UserService>(UserService);
+  });
+
+  it('should return user by id', async () => {
+    // Arrange
+    // Act
+    // Assert
+  });
+});
+</example>
